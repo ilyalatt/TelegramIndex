@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TelegramIndex", "src\api\TelegramIndex.fsproj", "{732808F6-2D4B-4036-876C-2DFA5601C960}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsharpUtils", "src\api\CSharpUtils\CSharpUtils.csproj", "{EB679122-4403-4D61-800D-9F2597A5E7F7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{732808F6-2D4B-4036-876C-2DFA5601C960}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{732808F6-2D4B-4036-876C-2DFA5601C960}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{732808F6-2D4B-4036-876C-2DFA5601C960}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{732808F6-2D4B-4036-876C-2DFA5601C960}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB679122-4403-4D61-800D-9F2597A5E7F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB679122-4403-4D61-800D-9F2597A5E7F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB679122-4403-4D61-800D-9F2597A5E7F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB679122-4403-4D61-800D-9F2597A5E7F7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

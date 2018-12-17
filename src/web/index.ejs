@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title><%- htmlWebpackPlugin.options.metadata.title %></title>
+
+    <!-- https://www.flaticon.com/free-icon/startup_1077220 -->
+    <!-- Icons made by https://freepik.com/ -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <base href="<%- htmlWebpackPlugin.options.metadata.baseUrl %>">
+  </head>
+  <body style="background-color: #1F2424" aurelia-app="main">
+    <% if (htmlWebpackPlugin.options.metadata.server) { %>
+    <script src="/webpack-dev-server.js"></script>
+    <% } %>
+  </body>
+</html>

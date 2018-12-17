@@ -1,0 +1,8 @@
+# directories
+src
+.idea
+
+# files
+Dockerfile*
+**/*.trx
+**/*.md

@@ -1,0 +1,7 @@
+session.dat
+config.json
+
+.DS_STORE
+.idea
+bin
+obj

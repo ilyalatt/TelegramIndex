@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Utils\Cast.fs" />
+    <Compile Include="Utils\Var.fs" />
+    <Compile Include="Utils\Task.fs" />
+    <Compile Include="Utils\FnArgs.fs" />
+    <Compile Include="Utils\DelayHelper.fs" />
+    <Compile Include="Config.fs" />
+    <Compile Include="ScrapperModel.fs" />
+    <Compile Include="LogModel.fs" />
+    <Compile Include="ConsoleLog.fs" />
+    <Compile Include="Log.fs" />
+    <Compile Include="Telegram.fs" />
+    <Compile Include="Scrapper.fs" />
+    <Compile Include="MemStorage.fs" />
+    <Compile Include="PhotoStorage.fs" />
+    <Compile Include="PhotoService.fs" />
+    <Compile Include="DataSync.fs" />
+    <Compile Include="ApiTransport.fs" />
+    <Compile Include="Api.fs" />
+    <Compile Include="WebApp.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ben.Demystifier" Version="0.1.3" />
+    <PackageReference Include="FSharp.Control.AsyncSeq" Version="2.0.21" />
+    <PackageReference Include="FsPickler" Version="5.2.0" />
+    <PackageReference Include="FsPickler.Json" Version="5.2.0" />
+    <PackageReference Include="Giraffe" Version="3.4.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.7.2" />
+    <PackageReference Include="System.Data.HashFunction.xxHash" Version="2.0.0" />
+    <PackageReference Include="TaskBuilder.fs" Version="2.1.0" />
+    <PackageReference Include="TLSharp" Version="0.1.0.374" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="CSharpUtils/CSharpUtils.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,21 @@
+<template>
+  <nav class="pagination is-small" role="navigation" aria-label="pagination" if.bind="pagesCount > 1">
+    <ul class="pagination-list">
+      <li if.bind="showFirstPage"><a class="pagination-link" click.delegate="selectPage(1)">1</a></li>
+      <li if.bind="showFirstPage"><span class="pagination-ellipsis">&hellip;</span></li>
+
+      <template repeat.for="page of leftCells">
+        <li><a class="pagination-link" click.delegate="selectPage(page)">${page}</a></li>
+      </template>
+
+      <li><a class="pagination-link is-current" click.delegate="selectPage(selectedPage)">${selectedPage}</a></li>
+
+      <template repeat.for="page of rightCells">
+        <li><a class="pagination-link" click.delegate="selectPage(page)">${page}</a></li>
+      </template>
+
+      <li if.bind="showLastPage"><span class="pagination-ellipsis">&hellip;</span></li>
+      <li if.bind="showLastPage"><a class="pagination-link" click.delegate="selectPage(pagesCount)">${pagesCount}</a></li>
+    </ul>
+  </nav>
+</template>

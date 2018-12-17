@@ -1,0 +1,37 @@
+<template>
+  <require from="./pager"></require>
+
+  <div if.bind="filter != null">
+    <div class="container">
+      <input class="input is-rounded search" type="text" placeholder="Search" value.two-way="filter.searchStr & debounce:200">
+
+      <div class="list">
+        <div repeat.for="message of filter.filteredMessages">
+          <article class="message">
+            <div class="message-body">
+              <div class="media" with.bind="message.user">
+                <div class="media-left">
+                  <a href.bind="userLink">
+                    <figure class="image is-48x48">
+                      <img src.bind="photoLink" onerror="this.style.display='none'" />
+                    </figure>
+                  </a>
+                </div>
+                <div class="media-content">
+                  <p class="title is-4 is-marginless">${firstName} ${lastName}</p>
+                  <p class="subtitle is-6 is-marginless" if.bind="username != null">${username}</p>
+                </div>
+              </div>
+
+              <div class="message-text">${message.text}</div>
+              <div class="message-date subtitle is-6 ">${message.date}</div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <pager selected-page.two-way="filter.selectedPage" pages-count.bind="filter.pagesCount"></pager>
+    </div>
+  </div>
+
+</template>

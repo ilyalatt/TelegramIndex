@@ -1,0 +1,36 @@
+.pre-wrap {
+  white-space: pre-wrap;       /* Since CSS 2.1 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+.message-text {
+  @extend .pre-wrap;
+
+  margin-top: 0.5rem;
+}
+
+.message-date {
+  margin-top: 0.5rem;
+}
+
+pager > nav {
+  padding-bottom: 1rem;
+  @media (max-width: 1024px) {
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+  }
+}
+
+.search {
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.image {
+  border-radius: 50%;
+  img { border-radius: 50%; }
+  background: gray;
+}
