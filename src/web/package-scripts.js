@@ -1,4 +1,4 @@
-const {series, crossEnv, rimraf} = require('nps-utils')
+const {series, rimraf} = require('nps-utils')
 
 module.exports = {
   scripts: {
