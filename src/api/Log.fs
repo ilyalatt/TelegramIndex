@@ -1,34 +1,16 @@
 module TelegramIndex.Log
 
 open System
-open System.IO
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open System.Diagnostics
 open FnArgs
 
 open MongoDB.Bson
-open MongoDB.Bson.Serialization
 open MongoDB.Bson.Serialization.Attributes
 open MongoDB.Driver
 open MongoDB.Driver.Linq
 
 open LogModel
-
-
-let private pickler = MBrace.FsPickler.Json.BsonSerializer()
-
-let private pickle<'T> (obj: 'T) =
-    let ms = new MemoryStream()
-    do pickler.Serialize(ms, obj, leaveOpen = true)
-    do ignore <| ms.Seek(0L, SeekOrigin.Begin)
-    BsonSerializer.Deserialize(ms)
-
-let private unpickle<'T> (bson: BsonDocument) =
-    let ms = new MemoryStream()
-    let writer = new IO.BsonBinaryWriter(ms)
-    do BsonSerializer.Serialize(writer, bson)
-    do ignore <| ms.Seek(0L, SeekOrigin.Begin)
-    pickler.Deserialize<'T>(ms)
 
 
 type LogRecordBatch() =
@@ -50,12 +32,12 @@ let readAll iface = task {
     return
         rs
         |> Seq.collect (fun x -> x.Records)
-        |> Seq.map unpickle<LogRecord>
+        |> Seq.map MongoPickler.unpickle<LogRecord>
 }
 
 let insert (logRecords: LogRecord list) iface = task {
     if logRecords.Length > 0 then
-        let rs = logRecords |> List.map pickle
+        let rs = logRecords |> List.map MongoPickler.pickle
         let batch =
             LogRecordBatch(
                 Timestamp = DateTimeOffset.UtcNow,

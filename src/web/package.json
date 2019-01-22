@@ -56,6 +56,6 @@
     "url-loader": "0.5.9",
     "wait-on": "2.0.2",
     "webpack": "3.3.0",
-    "webpack-dev-server": "2.5.1"
+    "webpack-dev-server": "3.1.14"
   }
 }

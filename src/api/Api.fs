@@ -10,7 +10,7 @@ open System.Data.HashFunction.xxHash
 
 type Interface = {
     MemStorage: MemStorage.State Var.Var
-    PhotoService: PhotoService.Interface
+    PhotoStorage: PhotoStorage.Interface
     Log: Log.Interface
 }
 
@@ -50,7 +50,7 @@ let api iface =
                 if isNotModified then
                     do ctx.SetStatusCode 304
                 else
-                    let! typeFile = iface.PhotoService |> PhotoService.getOrDownloadAndSave photoLoc
+                    let! typeFile = iface.PhotoStorage |> PhotoStorage.find photoLoc
                     let typeStrFile =
                         typeFile
                         |> Option.bind (fun (mimeType, p2, p3) ->

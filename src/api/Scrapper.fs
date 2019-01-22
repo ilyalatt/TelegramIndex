@@ -2,29 +2,34 @@ module TelegramIndex.Scrapper
 
 open System
 open FSharp.Control.Tasks.V2.ContextInsensitive
-open TeleSharp.TL
 open ScrapperModel
-open Cast
+open Telega.Rpc.Dto
+open Telega.Rpc.Dto.Types
+open TelegramIndex.Utils
 
-let fileLocationToInput (fileLocation: FileLocation) =
-    let fileInput = TLInputFileLocation()
-    do fileInput.VolumeId <- fileLocation.VolumeId
-    do fileInput.LocalId <- fileLocation.LocalId
-    do fileInput.Secret <- fileLocation.Secret
-    fileInput
+let fileLocationToInput (fileLocation: ScrapperModel.FileLocation) =
+    let fileInput =
+        InputFileLocation.Tag(
+            volumeId = fileLocation.VolumeId,
+            localId = fileLocation.LocalId,
+            secret = fileLocation.Secret,
+            fileReference = fileLocation.FileReference.ToBytesUnsafe()
+        )
+    fileInput |> InputFileLocation.op_Implicit
 
-let scrape (channelPeer: TLInputPeerChannel) (state: ScrapperModel.ScrapperState option) (iface: Telegram.Interface) = task {
+let scrape (channelPeer: InputPeer.ChannelTag) (state: ScrapperModel.ScrapperState option) (iface: Telegram.Interface) = task {
     let lastMessageId = state |> Option.map (fun x -> x.LastMessageId)
-    let! batch = Telegram.getChannelHistory channelPeer lastMessageId iface
+    let inputPeer = InputPeer.op_Implicit channelPeer
+    let! batch = Telegram.getChannelHistory inputPeer lastMessageId iface
     let msgs =
         batch.Messages
         |> Seq.rev
-        |> Seq.choose tryCastAs<TLMessage>
+        |> Seq.choose (Message.AsTag >> LExt.toOpt)
         |> Seq.sortBy (fun x -> x.Id) // should be sorted after rev
         |> List.ofSeq
     let users =
         batch.Users
-        |> Seq.choose tryCastAs<TLUser>
+        |> Seq.choose (User.AsTag >> LExt.toOpt)
         |> Seq.map (fun x -> (x.Id, x))
         |> Map.ofSeq
 
@@ -32,27 +37,27 @@ let scrape (channelPeer: TLInputPeerChannel) (state: ScrapperModel.ScrapperState
         msgs
         |> List.filter (fun m ->
             m.Message.StartsWith("#whois") &&
-            not <| m.ViaBotId.HasValue
+            m.ViaBotId.IsNone
         )
-        |> List.map (fun msg -> (msg, users |> Map.find msg.FromId.Value))
+        |> List.map (fun msg -> (msg, users |> Map.find (msg.FromId |> LExt.toOpt |> Option.get)))
         |> List.filter (fun (rawMsg, rawUser) -> not <| rawUser.Bot)
         |> List.map (fun (rawMsg, rawUser) ->
             let date =
-                rawMsg.EditDate |> Option.ofNullable |> Option.defaultValue rawMsg.Date
+                rawMsg.EditDate |> LExt.toOpt |> Option.defaultValue rawMsg.Date
                 |> int64 |> DateTimeOffset.FromUnixTimeSeconds
-            let msg = { Id = rawMsg.Id; UserId = rawMsg.FromId.Value; Text = rawMsg.Message; Date = date }
+            let msg = { Id = rawMsg.Id; UserId = rawMsg.FromId |> LExt.toOpt |> Option.get; Text = rawMsg.Message; Date = date }
 
             let userPhotoLocation =
-                rawUser.Photo |> Option.ofObj |> Option.map (
-                    castAs<TLUserProfilePhoto>
-                    >> (fun x -> x.PhotoSmall) >> castAs<TLFileLocation>
-                    >> (fun x -> { VolumeId = x.VolumeId; LocalId = x.LocalId; Secret = x.Secret })
+                rawUser.Photo |> LExt.toOpt |> Option.map (
+                    (UserProfilePhoto.AsTag >> LExt.toOpt >> Option.get)
+                    >> (fun x -> x.PhotoSmall) >> (FileLocation.AsTag >> LExt.toOpt >> Option.get)
+                    >> (fun x -> { VolumeId = x.VolumeId; LocalId = x.LocalId; Secret = x.Secret; FileReference = x.FileReference.ToArrayUnsafe() })
                 )
             let user = {
                 Id = rawUser.Id
-                FirstName = rawUser.FirstName
-                LastName = rawUser.LastName
-                Username = rawUser.Username |> Option.ofObj
+                FirstName = rawUser.FirstName |> LExt.toOpt |> Option.defaultValue null
+                LastName = rawUser.LastName |> LExt.toOpt |> Option.defaultValue null
+                Username = rawUser.Username |> LExt.toOpt
                 PhotoLocation = userPhotoLocation
             }
 

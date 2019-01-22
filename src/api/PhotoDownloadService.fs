@@ -1,4 +1,4 @@
-module TelegramIndex.PhotoService
+module TelegramIndex.PhotoDownloadService
 
 open System
 open FSharp.Control.Tasks.V2.ContextInsensitive
@@ -18,11 +18,4 @@ let downloadAndSave (photoLoc: ScrapperModel.FileLocation) (iface: Interface) = 
         let insertTask = iface.PhotoStorage |> PhotoStorage.insert photoLoc mimeType timestamp body
         do Log.trackTask insertTask iface.Log
         return Some (mimeType, timestamp, body)
-}
-
-let getOrDownloadAndSave (photoLoc: ScrapperModel.FileLocation) (iface: Interface) = task {
-    let! dbRes = iface.PhotoStorage |> PhotoStorage.find photoLoc
-    match dbRes with
-    | Some x -> return Some x
-    | None -> return! downloadAndSave photoLoc iface
 }

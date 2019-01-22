@@ -1,11 +1,11 @@
 module TelegramIndex.ScrapperModel
 
 open System
-open TeleSharp.TL
+open Telega.Rpc.Dto
 
 type ScrapeHistoryResult = {
-    Messages: TLMessage list
-    Users: Map<int, TLUser>
+    Messages: Types.Message list
+    Users: Map<int, Types.User>
 }
 
 type Message = {
@@ -19,6 +19,7 @@ type FileLocation = {
     VolumeId: int64
     LocalId: int
     Secret: int64
+    FileReference: byte[]
 }
 
 type User = {

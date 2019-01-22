@@ -31,9 +31,12 @@ let rec value<'T> (var: Var<'T>) : 'T =
 let create<'T> (value: 'T) : Source<'T> =
     Source(value)
 
-let update<'T> (value: 'T) (source: Source<'T>) : unit =
+let set<'T> (value: 'T) (source: Source<'T>) : unit =
     do source.value <- value
     do source.version <- source.version + 1
+
+let update<'T> (valueProvider: 'T -> 'T) (source: Source<'T>) : unit =
+    do set <| valueProvider source.value <| source
 
 let asVar<'T> (source: Source<'T>) : Var<'T> =
     source |> Src

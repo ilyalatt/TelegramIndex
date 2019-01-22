@@ -6,11 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Utils\Cast.fs" />
-    <Compile Include="Utils\Var.fs" />
-    <Compile Include="Utils\Task.fs" />
-    <Compile Include="Utils\FnArgs.fs" />
-    <Compile Include="Utils\DelayHelper.fs" />
+    <Compile Include="Utils/Cast.fs" />
+    <Compile Include="Utils/MongoPickler.fs" />
+    <Compile Include="Utils/Var.fs" />
+    <Compile Include="Utils/Task.fs" />
+    <Compile Include="Utils/FnArgs.fs" />
+    <Compile Include="Utils/DelayHelper.fs" />
+    <Compile Include="Utils/LExt.fs" />
     <Compile Include="Config.fs" />
     <Compile Include="ScrapperModel.fs" />
     <Compile Include="LogModel.fs" />
@@ -20,7 +22,7 @@
     <Compile Include="Scrapper.fs" />
     <Compile Include="MemStorage.fs" />
     <Compile Include="PhotoStorage.fs" />
-    <Compile Include="PhotoService.fs" />
+    <Compile Include="PhotoDownloadService.fs" />
     <Compile Include="DataSync.fs" />
     <Compile Include="ApiTransport.fs" />
     <Compile Include="Api.fs" />
@@ -34,6 +36,7 @@
     <PackageReference Include="FsPickler" Version="5.2.0" />
     <PackageReference Include="FsPickler.Json" Version="5.2.0" />
     <PackageReference Include="Giraffe" Version="3.4.0" />
+    <PackageReference Include="LanguageExt.FSharp" Version="3.1.14" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.2.0" />
@@ -41,7 +44,7 @@
     <PackageReference Include="MongoDB.Driver" Version="2.7.2" />
     <PackageReference Include="System.Data.HashFunction.xxHash" Version="2.0.0" />
     <PackageReference Include="TaskBuilder.fs" Version="2.1.0" />
-    <PackageReference Include="TLSharp" Version="0.1.0.374" />
+    <PackageReference Include="Telega" Version="0.2.1" />
   </ItemGroup>
 
   <ItemGroup>

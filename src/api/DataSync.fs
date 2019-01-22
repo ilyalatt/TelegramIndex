@@ -6,6 +6,7 @@ open FnArgs
 
 type Interface = {
     Telegram: Telegram.Interface
+    PhotoDownloadService: PhotoDownloadService.Interface
     Log: Log.Interface
 }
 
@@ -30,7 +31,7 @@ let init log = task {
 }
 
 let private longDelay () =
-    DelayHelper.delay 20.0 3.0
+    DelayHelper.delayBetween 3.0 20.0
 
 let private getScrapperSeq (initialScrapperState: ScrapperModel.ScrapperState option) (cfg: Config.ScrapperConfig) (iface: Interface) = task {
     let log = iface.Log
@@ -72,7 +73,6 @@ let private runImpl (cfg: Config.ScrapperConfig) (iface: Interface) (stateVar: S
                 |> Seq.filter ((shouldUpdate id)) |> Seq.map LogModel.LogRecord.User
                 |> List.ofSeq
 
-            (*
             let newPhotos =
                newMsgs |> Seq.map snd
                 |> Seq.filter ((shouldUpdate (fun u -> u.PhotoLocation)))
@@ -80,18 +80,19 @@ let private runImpl (cfg: Config.ScrapperConfig) (iface: Interface) (stateVar: S
                 |> List.ofSeq
             do!
                 newPhotos
-                |> Seq.map (flip PhotoService.downloadAndSave iface.PhotoService)
+                |> Seq.map (flip PhotoDownloadService.downloadAndSave iface.PhotoDownloadService)
                 |> Seq.map Task.ignore
                 |> Task.collectUnit
-            *)
 
             let rs = List.concat [ newMessagesLog; newUsersLog; [ LogModel.ScrapperState scrapperState ] ]
             do! Log.insert rs log
 
-            do flip Var.update stateVar <| {
-                MemStorage = MemStorage.update newMsgs stateVar.value.MemStorage
-                ScrapperState = scrapperState
-            }
+            do flip Var.update stateVar <| (fun v ->
+                { v with
+                    MemStorage = MemStorage.update newMsgs stateVar.value.MemStorage
+                    ScrapperState = scrapperState
+                }
+            )
 
             let lastScrapedMsg =
                 scrapperState |> Option.map (fun x -> x.LastMessageId)

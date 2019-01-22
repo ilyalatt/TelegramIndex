@@ -3,6 +3,7 @@ module TelegramIndex.PhotoStorage
 open System
 open FSharp.Control.Tasks.V2.ContextInsensitive
 
+open MongoDB.Bson
 open MongoDB.Bson.Serialization.Attributes
 open MongoDB.Driver
 
@@ -12,7 +13,7 @@ type Photo() =
     [<BsonId>]
     member val Id: byte[] = null with get, set
     member val Timestamp: DateTimeOffset = DateTimeOffset.MinValue with get, set
-    member val MimeType: Telegram.FileMimeType = Telegram.FileMimeType.Other with get, set
+    member val MimeType: BsonDocument = null with get, set
     member val Body: byte array = null with get, set
 
 type Interface = {
@@ -32,12 +33,12 @@ let find (loc: ScrapperModel.FileLocation) (iface: Interface) = task {
     let id = loc |> getId
     let! photoCursor = iface.PhotoCollection.FindAsync(fun x -> x.Id = id)
     let! photo = photoCursor.SingleOrDefaultAsync()
-    return if photo = null then None else Some (photo.MimeType, photo.Timestamp, photo.Body)
+    return if photo = null then None else Some (MongoPickler.unpickle photo.MimeType, photo.Timestamp, photo.Body)
 }
 
 let insert (loc: ScrapperModel.FileLocation) (mimeType: Telegram.FileMimeType) (timestamp: DateTimeOffset) (body: byte array) (iface: Interface) = task {
     let id = loc |> getId
-    let photo = new Photo(Id = id, Timestamp = timestamp, MimeType = mimeType, Body = body)
+    let photo = new Photo(Id = id, Timestamp = timestamp, MimeType = MongoPickler.pickle mimeType, Body = body)
     let! _ = iface.PhotoCollection.ReplaceOneAsync((fun x -> x.Id = id), photo, UpdateOptions(IsUpsert = true))
     return ()
 }
