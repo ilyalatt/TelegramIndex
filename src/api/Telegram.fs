@@ -3,11 +3,11 @@ module TelegramIndex.Telegram
 open System
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Telega
-open Telega.Internal
 open Telega.Rpc.Dto
 open Telega.Rpc.Dto.Types
 open Telega.Rpc.Dto.Types.Storage
 open LanguageExt.SomeHelp
+open TelegramIndex.Config
 open TelegramIndex.Utils
 
 type Semaphore = System.Threading.SemaphoreSlim
@@ -33,11 +33,11 @@ let repeat (action: 'X -> 'Y Task.RepeatResult Task.TplTask) (state: 'X) (log: L
                 else Task.RepeatResult.Repeat
     })
 
-let handleAuth (tg: TelegramClient) = task {
+let handleAuth (cfg: TgConfig) (tg: TelegramClient) = task {
     let readLine () = System.Console.ReadLine().Trim()
     do printfn "enter phone number"
     let phoneNumber = readLine ()
-    let! hash = tg.Auth.SendCode(phoneNumber.ToSome())
+    let! hash = tg.Auth.SendCode(cfg.ApiHash.ToSome(), phoneNumber.ToSome())
     do printfn "enter telegram code"
     let code = readLine ()
     try
@@ -53,9 +53,9 @@ let handleAuth (tg: TelegramClient) = task {
 
 let createClient (config: Config.TgConfig) (log: Log.Interface) =
     repeat (fun () -> task {
-        let! client = TelegramClient.Connect(config.ApiId, config.ApiHash.ToSome())
-        while not <| client.IsAuthorized do
-            do! handleAuth client
+        let! client = TelegramClient.Connect(config.ApiId)
+        while not <| client.Auth.IsAuthorized do
+            do! handleAuth config client
         return Task.RepeatResult.Done client
     }) () log
 
@@ -75,28 +75,13 @@ type ClientReqType =
 
 let clientReq (reqType: ClientReqType) (action: TelegramClient -> 'T Task.TplTask) (iface: Interface) =
     repeat (fun () -> task {
-        let delayBetween min max =
-            let ms n = n |> (*) 1000.0 |> int
-            let del = CSharpUtils.Rnd.NextInt(ms min, ms max) |> double |> TimeSpan.FromMilliseconds
-            let canMakeReqTimestamp = iface.LastReqTimestamp.value.Add(del)
-            canMakeReqTimestamp - DateTime.Now
-            |> Some
-            |> Option.filter (fun x -> x > TimeSpan.Zero)
-            |> Option.map (fun x -> x.TotalMilliseconds)
-            |> Option.map int
-            |> Option.map Task.delay
-            |> Option.defaultWith (fun () -> Task.returnM () |> Task.ignore)
-
-        do! delayBetween 0.7 1.0
-
         let tg = iface.Client
         try
             try
                 let! res = action tg
                 return Task.RepeatResult.Done res
             with e when e :? TgPasswordNeededException || e.Message = "AUTH_KEY_UNREGISTERED" ->
-                do! handleAuth tg
-                return Task.RepeatResult.Repeat
+                return Task.RepeatResult.StopAndThrow e
         finally
             do Var.set <| DateTime.Now <| iface.LastReqTimestamp
     }) () iface.Log
@@ -147,7 +132,7 @@ let getFileType (fileType: FileType) : FileMimeType =
 let getFile (file: InputFileLocation) = clientReq File (fun client -> task {
     do ConsoleLog.trace "get_file_start"
     let ms = new System.IO.MemoryStream()
-    let! fileType = client.DownloadFile((ms :> System.IO.Stream).ToSome(), file.ToSome())
+    let! fileType = client.Upload.DownloadFile((ms :> System.IO.Stream).ToSome(), file.ToSome())
     do ConsoleLog.trace "get_file_end"
     return (getFileType fileType, ms.ToArray())
 })
