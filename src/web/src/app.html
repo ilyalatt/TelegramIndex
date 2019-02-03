@@ -13,7 +13,7 @@
                 <div class="media-left">
                   <a href.bind="userLink">
                     <figure class="image is-48x48">
-                      <img src.bind="photoLink" onerror="this.style.display='none'" />
+                      <img if.bind="photoLink" src.bind="photoLink" />
                     </figure>
                   </a>
                 </div>

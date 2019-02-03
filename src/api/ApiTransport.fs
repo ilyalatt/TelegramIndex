@@ -13,6 +13,7 @@ type User = {
     FirstName: string
     LastName: string
     Username: string
+    HasPhoto: bool
 }
 
 type Data = {
@@ -34,6 +35,7 @@ let mapState (state: MemStorage.State) =
             FirstName = u.FirstName
             LastName = u.LastName
             Username = u.Username |> Option.defaultValue null
+            HasPhoto = u.PhotoLocation |> Option.isSome
         }
         ) |> List.ofSeq
     }

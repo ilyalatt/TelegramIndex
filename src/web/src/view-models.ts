@@ -5,14 +5,14 @@ export class User {
   readonly lastName: string
   readonly username: string | null
   readonly userLink: string
-  readonly photoLink: string
+  readonly photoLink: string | null
 
   constructor(model: m.User) {
     this.firstName = model.firstName;
     this.lastName = model.lastName
     this.username = model.username == null ? null : '@' + model.username;
     this.userLink = model.username == null ? `tg://user?id=${model.id}` : `https://t.me/${model.username}`;
-    this.photoLink = `/api/img/${model.id}`;
+    this.photoLink = !model.hasPhoto ? null : `/api/img/${model.id}`;
   }
 }
 
