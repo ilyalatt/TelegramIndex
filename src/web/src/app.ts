@@ -17,7 +17,7 @@ export class App {
       let pad2 = (n: number) => ('0' + n).slice(-2)
       let year = date.getFullYear();
       let month = pad2(date.getMonth() + 1);
-      let day = pad2(date.getDay());
+      let day = pad2(date.getDate());
       let hours = pad2(date.getHours());
       let minutes = pad2(date.getMinutes());
       return `${year}-${month}-${day} ${hours}:${minutes}`;
