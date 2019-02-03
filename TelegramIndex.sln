@@ -4,8 +4,6 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TelegramIndex", "src\api\Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsharpUtils", "src\api\CSharpUtils\CSharpUtils.csproj", "{EB679122-4403-4D61-800D-9F2597A5E7F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Telega", "..\Telega\Telega\Telega.csproj", "{156791A9-AC31-412E-B0F2-7E398DF39BD8}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,9 +18,5 @@ Global
 		{EB679122-4403-4D61-800D-9F2597A5E7F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EB679122-4403-4D61-800D-9F2597A5E7F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EB679122-4403-4D61-800D-9F2597A5E7F7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{156791A9-AC31-412E-B0F2-7E398DF39BD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{156791A9-AC31-412E-B0F2-7E398DF39BD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{156791A9-AC31-412E-B0F2-7E398DF39BD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{156791A9-AC31-412E-B0F2-7E398DF39BD8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
