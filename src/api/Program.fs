@@ -18,18 +18,21 @@ let mainAsync () = task {
         if runWithoutSync then Task.returnM None
         else ConsoleLog.perfAsync "connect to telegram" (fun () -> Telegram.init cfg.Telegram log |> Task.map Some)
 
-    let photoStorage = PhotoStorage.init db
-    let! dataSyncState = ConsoleLog.perfAsync "restore state" (fun () -> DataSync.init log)
-    let memStorage = dataSyncState |> Var.asVar |> Var.map (fun x -> x.MemStorage)
-    let photoDownloadService: PhotoDownloadService.Interface = { PhotoStorage = photoStorage; Telegram = tg; Log = log }
+    try
+        let photoStorage = PhotoStorage.init db
+        let! dataSyncState = ConsoleLog.perfAsync "restore state" (fun () -> DataSync.init log)
+        let memStorage = dataSyncState |> Var.asVar |> Var.map (fun x -> x.MemStorage)
+        let photoDownloadService: PhotoDownloadService.Interface = { PhotoStorage = photoStorage; Telegram = tg; Log = log }
 
-    do tg |> Option.iter (fun tg ->
-        let dataSyncIface: DataSync.Interface = { Telegram = tg; PhotoDownloadService = photoDownloadService; Log = log }
-        do DataSync.runInBackground cfg.Scrapper dataSyncIface dataSyncState
-    )
+        do tg |> Option.iter (fun tg ->
+            let dataSyncIface: DataSync.Interface = { Telegram = tg; PhotoDownloadService = photoDownloadService; Log = log }
+            do DataSync.runInBackground cfg.Scrapper dataSyncIface dataSyncState
+        )
 
-    let api: Api.Interface = { MemStorage = memStorage; PhotoStorage = photoStorage; Log = log }
-    do WebApp.run api
+        let api: Api.Interface = { MemStorage = memStorage; PhotoStorage = photoStorage; Log = log }
+        do WebApp.run api
+    finally
+        tg |> Option.iter (fun tg -> tg.Client.Dispose())
 }
 
 [<EntryPoint>]

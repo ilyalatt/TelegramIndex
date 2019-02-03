@@ -18,18 +18,14 @@ let returnM<'T> (value: 'T): 'T TplTask = task {
 }
 
 let collect<'T> (seq: 'T TplTask seq): 'T list TplTask = task {
-    let mutable res = []
-    for tplTask in seq do
-        let! taskRes = tplTask
-        do res <- taskRes::res
-    return List.rev <| res
+    let! arr = TplTask.WhenAll seq
+    return arr |> List.ofArray
 }
 
 let collectUnit (seq: TplUnitTask seq): TplTask<unit> = task {
-    for tplTask in seq do
-        do! tplTask
+    do! TplTask.WhenAll seq
+    return ()
 }
-
 let ignore<'T> (tplTask: 'T TplTask) : TplUnitTask =
     tplTask :> TplUnitTask
 
@@ -42,16 +38,3 @@ let cycle<'T> (generator: 'T -> (bool * 'T) TplTask) (state: 'T): 'T TplTask = t
         do loop <- shouldContinue
     return state
 }
-
-type RepeatResult<'T> =
-| StopAndThrow of System.Exception
-| Repeat
-| Done of 'T
-
-let repeat<'T> (generator: unit -> 'T RepeatResult TplTask): 'T TplTask =
-    cycle (fun _ -> task {
-        match! generator () with
-        | Repeat -> return (true, Unchecked.defaultof<'T>)
-        | StopAndThrow e -> return raise e
-        | Done res -> return (false, res)
-    }) <| Unchecked.defaultof<'T>

@@ -15,23 +15,7 @@ type Semaphore = System.Threading.SemaphoreSlim
 type Interface = {
     Client: TelegramClient
     Log: Log.Interface
-    LastReqTimestamp: DateTime Var.Source
 }
-
-let attemptsCount = 3
-let repeat (action: 'X -> 'Y Task.RepeatResult Task.TplTask) (state: 'X) (log: Log.Interface)  =
-    let mutable counter = 0
-    Task.repeat (fun _ -> task {
-        do counter <- counter + 1
-        try
-            let! res = action state
-            return res
-        with e ->
-            do! Log.reportException e log
-            return
-                if counter >= attemptsCount then Task.RepeatResult.StopAndThrow e
-                else Task.RepeatResult.Repeat
-    })
 
 let handleAuth (cfg: TgConfig) (tg: TelegramClient) = task {
     let readLine () = System.Console.ReadLine().Trim()
@@ -51,43 +35,30 @@ let handleAuth (cfg: TgConfig) (tg: TelegramClient) = task {
         ()
 }
 
-let createClient (config: Config.TgConfig) (log: Log.Interface) =
-    repeat (fun () -> task {
-        let! client = TelegramClient.Connect(config.ApiId)
-        while not <| client.Auth.IsAuthorized do
-            do! handleAuth config client
-        return Task.RepeatResult.Done client
-    }) () log
+let createClient (config: Config.TgConfig) (log: Log.Interface) = task {
+    let! client = TelegramClient.Connect(config.ApiId)
+    while not <| client.Auth.IsAuthorized do
+        do! handleAuth config client
+    return client
+}
 
 let init (config: Config.TgConfig) (log: Log.Interface) = task {
     let! client = createClient config log
     return {
         Client = client
         Log = log
-        LastReqTimestamp = Var.create <| DateTime.MinValue
     }
 }
 
 
-type ClientReqType =
-| Common
-| File
-
-let clientReq (reqType: ClientReqType) (action: TelegramClient -> 'T Task.TplTask) (iface: Interface) =
-    repeat (fun () -> task {
-        let tg = iface.Client
-        try
-            try
-                let! res = action tg
-                return Task.RepeatResult.Done res
-            with e when e :? TgPasswordNeededException || e.Message = "AUTH_KEY_UNREGISTERED" ->
-                return Task.RepeatResult.StopAndThrow e
-        finally
-            do Var.set <| DateTime.Now <| iface.LastReqTimestamp
-    }) () iface.Log
+let clientReq (action: TelegramClient -> 'T Task.TplTask) (iface: Interface) = task {
+    let tg = iface.Client
+    return! action tg
+    // with :? TgException as e when (e :? TgPasswordNeededException || e :? TgNotAuthenticatedException) ->
+}
 
 let batchLimit = 100 // the API limit
-let getChannelHistory channelPeer fromId = clientReq Common (fun client -> task {
+let getChannelHistory channelPeer fromId = clientReq (fun client -> task {
     let req =
         Functions.Messages.GetHistory(
             peer = channelPeer,
@@ -129,7 +100,7 @@ let getFileType (fileType: FileType) : FileMimeType =
         pngTag = (fun _ -> Image ImageFileMimeType.Png)
    )
 
-let getFile (file: InputFileLocation) = clientReq File (fun client -> task {
+let getFile (file: InputFileLocation) = clientReq (fun client -> task {
     do ConsoleLog.trace "get_file_start"
     let ms = new System.IO.MemoryStream()
     let! fileType = client.Upload.DownloadFile((ms :> System.IO.Stream).ToSome(), file.ToSome())
@@ -137,7 +108,7 @@ let getFile (file: InputFileLocation) = clientReq File (fun client -> task {
     return (getFileType fileType, ms.ToArray())
 })
 
-let findChannel channelUsername = clientReq Common (fun client -> task {
+let findChannel channelUsername = clientReq (fun client -> task {
     do ConsoleLog.trace "get_user_dialogs_start"
     let! res =
         client.Messages.GetDialogs() |> Task.map (

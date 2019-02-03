@@ -107,8 +107,16 @@ let private runImpl (cfg: Config.ScrapperConfig) (iface: Interface) (stateVar: S
 }
 
 let runInBackground cfg iface stateVar = ignore <| task {
-   while true do
-       try do! runImpl cfg iface stateVar
-       with err -> do! Log.reportException err iface.Log
+   let mutable flag = false
+   while not flag do
+       try
+           do! runImpl cfg iface stateVar
+       with err ->
+           let isDisconnect = err :? Telega.TgBrokenConnectionException
+           if not isDisconnect then
+               do! Log.reportException err iface.Log
+           if (err :? Telega.TgPasswordNeededException || err :? Telega.TgNotAuthenticatedException) then
+               flag <- true
+
        do! longDelay ()
 }
