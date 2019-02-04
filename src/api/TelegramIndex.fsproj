@@ -44,7 +44,7 @@
     <PackageReference Include="MongoDB.Driver" Version="2.7.2" />
     <PackageReference Include="System.Data.HashFunction.xxHash" Version="2.0.0" />
     <PackageReference Include="TaskBuilder.fs" Version="2.1.0" />
-    <PackageReference Include="Telega" Version="0.3.0" />
+    <PackageReference Include="Telega" Version="0.3.1" />
   </ItemGroup>
 
   <ItemGroup>

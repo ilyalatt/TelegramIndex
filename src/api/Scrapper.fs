@@ -1,6 +1,7 @@
 module TelegramIndex.Scrapper
 
 open System
+open System.Text
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open ScrapperModel
 open Telega.Rpc.Dto
@@ -33,12 +34,35 @@ let scrape (channelPeer: InputPeer.ChannelTag) (state: ScrapperModel.ScrapperSta
         |> Seq.map (fun x -> (x.Id, x))
         |> Map.ofSeq
 
+    let emptify idx len (s: string) =
+        let sb = StringBuilder(s)
+        do Seq.init len ((+) idx) |> Seq.iter (fun p -> sb.[p] <- ' ')
+        sb.ToString()
+
+    let msgEntities (msg: Message.Tag) =
+        msg.Entities |> LExt.toOpt
+        |> Option.map List.ofSeq
+        |> Option.defaultValue []
+
+    let whoisMark = "#whois"
     let messages =
         msgs
-        |> List.filter (fun m ->
-            m.Message.StartsWith("#whois") &&
-            m.ViaBotId.IsNone
+        |> List.filter (fun m -> m.ViaBotId.IsNone && m.FwdFrom.IsNone)
+        |> List.map (fun m ->
+            m
+            |> msgEntities
+            |> Seq.choose (fun x -> x.AsHashtagTag() |> LExt.toOpt)
+            |> Seq.filter (fun x -> m.Message.Substring(x.Offset, x.Length) = whoisMark)
+            |> Seq.filter (fun x -> x.Offset = 0 || x.Offset + x.Length = m.Message.Length)
+            |> List.ofSeq
+            |> Some
+            |> Option.filter (not << List.isEmpty)
+            |> Option.map (Seq.fold (fun a x -> a |> emptify x.Offset x.Length) m.Message)
+            |> Option.map (fun msg -> msg.Trim())
+            |> Option.defaultValue ""
+            |> (fun msg -> m.With(message = msg))
         )
+        |> List.filter (fun m -> not <| String.IsNullOrWhiteSpace(m.Message))
         |> List.map (fun msg -> (msg, users |> Map.find (msg.FromId |> LExt.toOpt |> Option.get)))
         |> List.filter (fun (rawMsg, rawUser) -> not <| rawUser.Bot)
         |> List.map (fun (rawMsg, rawUser) ->
