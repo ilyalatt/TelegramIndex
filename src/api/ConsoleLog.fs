@@ -7,7 +7,7 @@ open System.Threading.Tasks
 let print msg =
     do printfn "%s:  %s" <| System.DateTime.Now.ToString("O") <| msg
 
-let showTrace = false
+let showTrace = true
 let trace msg =
     if showTrace then msg |> (+) "TRACE " |> print
 

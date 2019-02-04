@@ -10,6 +10,8 @@ let initDb (cfg: Config.StorageConfig) =
 
 let runWithoutSync = System.Environment.GetEnvironmentVariable("DISABLE_SYNC") <> null
 
+do Telega.Internal.TgTrace.IsEnabled <- true
+
 let mainAsync () = task {
     let! cfg = Config.readCfg ()
     let db = ConsoleLog.perf "init db" (fun () -> initDb cfg.Storage)
