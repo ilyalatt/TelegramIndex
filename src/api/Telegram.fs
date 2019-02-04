@@ -1,6 +1,5 @@
 module TelegramIndex.Telegram
 
-open System
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Telega
 open Telega.Rpc.Dto
@@ -9,8 +8,6 @@ open Telega.Rpc.Dto.Types.Storage
 open LanguageExt.SomeHelp
 open TelegramIndex.Config
 open TelegramIndex.Utils
-
-type Semaphore = System.Threading.SemaphoreSlim
 
 type Interface = {
     Client: TelegramClient
@@ -54,7 +51,6 @@ let init (config: Config.TgConfig) (log: Log.Interface) = task {
 let clientReq (action: TelegramClient -> 'T Task.TplTask) (iface: Interface) = task {
     let tg = iface.Client
     return! action tg
-    // with :? TgException as e when (e :? TgPasswordNeededException || e :? TgNotAuthenticatedException) ->
 }
 
 let batchLimit = 100 // the API limit
