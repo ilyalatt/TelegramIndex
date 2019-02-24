@@ -10,7 +10,7 @@ export class Filter {
 
   private _isProcessingFilter = false;
   private _lastSearchResult: Message[] = [];
-  private _lastSearchResultSearchStr: string = '';
+  private _lastSearchResultSearchStr = '';
 
   constructor(private readonly _messages: Message[]) {
     this._lastSearchResult = _messages;

@@ -31,10 +31,6 @@ export class App {
   }
 
   constructor(private readonly httpClient: HttpClient) {
-    this.loadData().then(data => this.initFilter(data));
-  }
-
-  abc(a: any) {
-    console.log(a);
+    this.loadData().then(data => this.initFilter(data.reverse()));
   }
 }
