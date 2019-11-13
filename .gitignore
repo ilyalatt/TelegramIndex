@@ -3,6 +3,7 @@ config.json
 
 .DS_STORE
 .idea
+.ionide
 bin
 obj
 build
