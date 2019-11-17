@@ -57,7 +57,6 @@ let scrape (channelPeer: InputPeer.ChannelTag) (state: ScrapperModel.ScrapperSta
             |> msgEntities
             |> Seq.choose (fun x -> x.AsHashtagTag() |> LExt.toOpt)
             |> Seq.filter (fun x -> m.Message.Substring(x.Offset, x.Length) = whoisMark)
-            |> Seq.filter (fun x -> x.Offset = 0 || x.Offset + x.Length = m.Message.Length)
             |> List.ofSeq
             |> Some
             |> Option.filter (not << List.isEmpty)
