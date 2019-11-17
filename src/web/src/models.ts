@@ -9,7 +9,7 @@ export interface User {
   firstName: string
   lastName: string
   username?: string
-  hasPhoto: boolean
+  photoId?: string
 }
 
 export interface Data {

@@ -21,23 +21,23 @@ let api iface =
         route "/api/ping" >=> text "pong"
         route "/api/data" >>> fun () -> dataVar |> Var.value |> json
 
-        routef "/api/img/%i" <| fun userId next ctx -> task {
+        routef "/api/img/%d" <| fun photoId _next ctx -> task {
             let setNotFound () = do ctx.SetStatusCode 404
             let photoLocOpt =
                 iface.MemStorage |> Var.value
-                |> MemStorage.users
-                |> Map.tryFind userId |> Option.bind (fun u -> u.PhotoLocation)
+                |> MemStorage.photos
+                |> Map.tryFind photoId
             match photoLocOpt with
             | None ->
                 do setNotFound ()
             | Some photoLoc ->
-                do ctx.SetHttpHeader "Cache-Control" "max-age=31536000"
                 let! photoOpt = PhotoStorage.find photoLoc
                 match photoOpt with
                 | Some photo ->
                     let body = photo.Body
                     let mimeType = "image/" + photo.Extension.Substring(1)
                     do ctx.SetContentType(mimeType)
+                    do ctx.SetHttpHeader "Cache-Control" "max-age=31536000"
                     do! ctx.Response.Body.WriteAsync(body, 0, body.Length)
                 | None ->
                     do setNotFound ()

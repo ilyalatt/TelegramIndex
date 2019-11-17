@@ -12,7 +12,7 @@ export class User {
     this.lastName = model.lastName
     this.username = model.username == null ? null : '@' + model.username;
     this.userLink = model.username == null ? `tg://user?id=${model.id}` : `https://t.me/${model.username}`;
-    this.photoLink = !model.hasPhoto ? null : `/api/img/${model.id}`;
+    this.photoLink = model.photoId == null ? null : `/api/img/${model.photoId}`;
   }
 }
 
