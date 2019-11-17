@@ -43,7 +43,7 @@ module.exports = ({ production, server, extractCss } = { }) => ({
   },
   devServer: {
     proxy: {
-      '/api': 'http://sns-index.com' // TODO: env param
+      '/api': 'http://localhost:5000' // TODO: env param
     },
     contentBase: outDir,
     historyApiFallback: true,
