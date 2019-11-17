@@ -21,7 +21,7 @@
     "aurelia-templating": "1.10.2",
     "aurelia-templating-resources": "1.12.0",
     "bluebird": "3.7.1",
-    "bulma": "0.8.0",
+    "bulma": "0.7.2",
     "bulmaswatch": "0.7.5",
     "isomorphic-fetch": "2.2.1"
   },
