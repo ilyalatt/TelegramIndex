@@ -6,4 +6,3 @@ type LogRecord =
 | Message of ScrapperModel.Message
 | User of ScrapperModel.User
 | ScrapperState of ScrapperModel.ScrapperState option
-| FileDownloaded of ScrapperModel.FileLocation

@@ -1,44 +1,40 @@
 module TelegramIndex.PhotoStorage
 
 open System
+open System.IO
 open FSharp.Control.Tasks.V2.ContextInsensitive
 
-open MongoDB.Bson
-open MongoDB.Bson.Serialization.Attributes
-open MongoDB.Driver
 
-
-[<AllowNullLiteral>]
-type Photo() =
-    [<BsonId>]
-    member val Id: byte[] = null with get, set
-    member val Timestamp: DateTimeOffset = DateTimeOffset.MinValue with get, set
-    member val MimeType: BsonDocument = null with get, set
-    member val Body: byte array = null with get, set
-
-type Interface = {
-    PhotoCollection: IMongoCollection<Photo>
+type Photo = {
+  Id: string
+  Extension: string
+  Body: byte array
 }
 
-let init (db: IMongoDatabase) =
-    { PhotoCollection = db.GetCollection<Photo>("photos") }
-
-
-let getId (loc: ScrapperModel.FileLocation) =
-    let inline bts32 (n: int) = BitConverter.GetBytes n
+let getId (loc: ScrapperModel.PhotoLocation) =
     let inline bts64 (n: int64) = BitConverter.GetBytes n
-    Array.concat [ bts64 loc.VolumeId; bts32 loc.LocalId; bts64 loc.Secret ]
+    let bytes = bts64 loc.PhotoId
+    bytes |> BitConverter.ToString |> (fun s -> s.Replace("-", "").ToLower())
 
-let find (loc: ScrapperModel.FileLocation) (iface: Interface) = task {
+let imageDirectory = DirectoryInfo("images")
+if not imageDirectory.Exists then imageDirectory.Create()
+
+let find (loc: ScrapperModel.PhotoLocation) = task {
     let id = loc |> getId
-    let! photoCursor = iface.PhotoCollection.FindAsync(fun x -> x.Id = id)
-    let! photo = photoCursor.SingleOrDefaultAsync()
-    return if photo = null then None else Some (MongoPickler.unpickle photo.MimeType, photo.Timestamp, photo.Body)
+    let files = imageDirectory.GetFiles(id + ".*")
+    match files |> Seq.tryHead with
+    | None -> return None
+    | Some file ->
+        let! content = File.ReadAllBytesAsync(file.FullName)
+        let extension = file.Extension
+        return Some <| { Id = id; Extension = extension; Body = content }
 }
 
-let insert (loc: ScrapperModel.FileLocation) (mimeType: Telegram.FileMimeType) (timestamp: DateTimeOffset) (body: byte array) (iface: Interface) = task {
+let insert (loc: ScrapperModel.PhotoLocation) (mimeType: Telegram.ImageFileMimeType) (body: byte array) = task {
     let id = loc |> getId
-    let photo = new Photo(Id = id, Timestamp = timestamp, MimeType = MongoPickler.pickle mimeType, Body = body)
-    let! _ = iface.PhotoCollection.ReplaceOneAsync((fun x -> x.Id = id), photo, UpdateOptions(IsUpsert = true))
+    let extension = "." + mimeType.ToString().ToLower()
+    let fileName = id + extension
+    let path = Path.Combine(imageDirectory.FullName, fileName)
+    do! File.WriteAllBytesAsync(path, body)
     return ()
 }

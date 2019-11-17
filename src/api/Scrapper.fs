@@ -4,23 +4,26 @@ open System
 open System.Text
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open ScrapperModel
-open Telega.Rpc.Dto
 open Telega.Rpc.Dto.Types
 open TelegramIndex.Utils
 
-let fileLocationToInput (fileLocation: ScrapperModel.FileLocation) =
-    let fileInput =
-        InputFileLocation.Tag(
-            volumeId = fileLocation.VolumeId,
-            localId = fileLocation.LocalId,
-            secret = fileLocation.Secret,
-            fileReference = fileLocation.FileReference.ToBytesUnsafe()
-        )
-    fileInput |> InputFileLocation.op_Implicit
+let fileLocationToInput (loc: ScrapperModel.PhotoLocation) : InputFileLocation =
+    let user = loc.User
+    let peer: InputPeer =
+        InputPeer.UserTag(
+            userId = user.Id,
+            accessHash = user.AccessHash
+        ) |> InputPeer.UserTag.op_Implicit
+    InputFileLocation.PeerPhotoTag(
+        big = false,
+        volumeId = loc.VolumeId,
+        localId = loc.LocalId,
+        peer = peer
+    ) |> InputFileLocation.PeerPhotoTag.op_Implicit
 
 let scrape (channelPeer: InputPeer.ChannelTag) (state: ScrapperModel.ScrapperState option) (iface: Telegram.Interface) = task {
     let lastMessageId = state |> Option.map (fun x -> x.LastMessageId)
-    let inputPeer = InputPeer.op_Implicit channelPeer
+    let inputPeer: InputPeer = channelPeer |> InputPeer.ChannelTag.op_Implicit
     let! batch = Telegram.getChannelHistory inputPeer lastMessageId iface
     let msgs =
         batch.Messages
@@ -48,7 +51,8 @@ let scrape (channelPeer: InputPeer.ChannelTag) (state: ScrapperModel.ScrapperSta
     let messages =
         msgs
         |> List.filter (fun m -> m.ViaBotId.IsNone && m.FwdFrom.IsNone)
-        |> List.map (fun m ->
+        |> List.filter (fun m -> m.Message.Length >= 20)
+        |> List.choose (fun m ->
             m
             |> msgEntities
             |> Seq.choose (fun x -> x.AsHashtagTag() |> LExt.toOpt)
@@ -57,14 +61,13 @@ let scrape (channelPeer: InputPeer.ChannelTag) (state: ScrapperModel.ScrapperSta
             |> List.ofSeq
             |> Some
             |> Option.filter (not << List.isEmpty)
-            |> Option.map (Seq.fold (fun a x -> a |> emptify x.Offset x.Length) m.Message)
-            |> Option.map (fun msg -> msg.Trim())
-            |> Option.defaultValue ""
-            |> (fun msg -> m.With(message = msg))
+            |> Option.map (
+                Seq.fold (fun a x -> a |> emptify x.Offset x.Length) m.Message
+                >> fun msgTxt -> msgTxt.Trim()
+                >> fun msgTxt -> (m.With(message = msgTxt), users |> Map.find (m.FromId |> LExt.toOpt |> Option.get))
+            )
+            |> Option.filter (fun (_rawMsg, rawUser) -> not <| rawUser.Bot)
         )
-        |> List.filter (fun m -> not <| String.IsNullOrWhiteSpace(m.Message))
-        |> List.map (fun msg -> (msg, users |> Map.find (msg.FromId |> LExt.toOpt |> Option.get)))
-        |> List.filter (fun (rawMsg, rawUser) -> not <| rawUser.Bot)
         |> List.map (fun (rawMsg, rawUser) ->
             let date =
                 rawMsg.EditDate |> LExt.toOpt |> Option.defaultValue rawMsg.Date
@@ -72,10 +75,20 @@ let scrape (channelPeer: InputPeer.ChannelTag) (state: ScrapperModel.ScrapperSta
             let msg = { Id = rawMsg.Id; UserId = rawMsg.FromId |> LExt.toOpt |> Option.get; Text = rawMsg.Message; Date = date }
 
             let userPhotoLocation =
-                rawUser.Photo |> LExt.toOpt |> Option.map (
-                    (UserProfilePhoto.AsTag >> LExt.toOpt >> Option.get)
-                    >> (fun x -> x.PhotoSmall) >> (FileLocation.AsTag >> LExt.toOpt >> Option.get)
-                    >> (fun x -> { VolumeId = x.VolumeId; LocalId = x.LocalId; Secret = x.Secret; FileReference = x.FileReference.ToArrayUnsafe() })
+                rawUser.Photo |> LExt.toOpt |> Option.bind (UserProfilePhoto.AsTag >> LExt.toOpt)
+                |> Option.bind(fun x ->
+                    rawUser.AccessHash |> LExt.toOpt |> Option.map(fun accessHash ->
+                        let photo = x.PhotoSmall
+                        {
+                            VolumeId = photo.VolumeId
+                            LocalId = photo.LocalId
+                            PhotoId = x.PhotoId
+                            User = {
+                                Id = rawUser.Id
+                                AccessHash = accessHash
+                            }
+                        }
+                    )
                 )
             let user = {
                 Id = rawUser.Id

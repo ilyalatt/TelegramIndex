@@ -11,7 +11,6 @@ open TelegramIndex.Utils
 
 type Interface = {
     Client: TelegramClient
-    Log: Log.Interface
 }
 
 let handleAuth (cfg: TgConfig) (tg: TelegramClient) = task {
@@ -32,29 +31,24 @@ let handleAuth (cfg: TgConfig) (tg: TelegramClient) = task {
         ()
 }
 
-let createClient (config: Config.TgConfig) (log: Log.Interface) = task {
+let createClient (config: Config.TgConfig) = task {
     let! client = TelegramClient.Connect(config.ApiId)
     while not <| client.Auth.IsAuthorized do
         do! handleAuth config client
     return client
 }
 
-let init (config: Config.TgConfig) (log: Log.Interface) = task {
-    let! client = createClient config log
+let init (config: Config.TgConfig) = task {
+    let! client = createClient config
     return {
         Client = client
-        Log = log
     }
 }
 
 
-let clientReq (action: TelegramClient -> 'T Task.TplTask) (iface: Interface) = task {
-    let tg = iface.Client
-    return! action tg
-}
-
 let batchLimit = 100 // the API limit
-let getChannelHistory channelPeer fromId = clientReq (fun client -> task {
+let getChannelHistory channelPeer fromId (iface: Interface) = task {
+    let client = iface.Client
     let req =
         Functions.Messages.GetHistory(
             peer = channelPeer,
@@ -77,7 +71,7 @@ let getChannelHistory channelPeer fromId = clientReq (fun client -> task {
         |> Option.get
     do ConsoleLog.trace "get_chat_history_end"
     return res
-})
+}
 
 type ImageFileMimeType =
 | Gif
@@ -96,27 +90,33 @@ let getFileType (fileType: FileType) : FileMimeType =
         pngTag = (fun _ -> Image ImageFileMimeType.Png)
    )
 
-let getFile (file: InputFileLocation) = clientReq (fun client -> task {
+let getFile (file: InputFileLocation) (iface: Interface) = task {
+    let client = iface.Client
     do ConsoleLog.trace "get_file_start"
     let ms = new System.IO.MemoryStream()
     let! fileType = client.Upload.DownloadFile((ms :> System.IO.Stream).ToSome(), file.ToSome())
     do ConsoleLog.trace "get_file_end"
     return (getFileType fileType, ms.ToArray())
-})
+}
 
-let findChannel channelUsername = clientReq (fun client -> task {
+let findChannel channelUsername (iface: Interface) = task {
+    let client = iface.Client
     do ConsoleLog.trace "get_user_dialogs_start"
     let! res =
         client.Messages.GetDialogs() |> Task.map (
             (Messages.Dialogs.AsTag >> LExt.toOpt >> Option.get)
             >> (fun d -> d.Chats)
             >> Seq.choose (Chat.AsChannelTag >> LExt.toOpt)
+            >> Seq.filter (fun x ->
+                printfn "%s" <| x.Title
+                true
+            )
             >> Seq.filter (fun x -> x.Username |> LExt.toOpt = Some channelUsername)
             >> Seq.tryHead
         )
     do ConsoleLog.trace "get_user_dialogs_end"
     return res
-})
+}
 
 let getChannelPeer (channel: Chat.ChannelTag) =
     let channelPeer =

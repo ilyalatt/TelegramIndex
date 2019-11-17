@@ -15,9 +15,9 @@ let configureServices (services: IServiceCollection) =
     do ignore <| services
 
 let run iface =
-    do WebHostBuilder()
+    WebHostBuilder()
         .UseKestrel()
         .Configure(Action<IApplicationBuilder> (configureApp iface))
         .ConfigureServices(configureServices)
         .Build()
-        .Run()
+        .RunAsync()

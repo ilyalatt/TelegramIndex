@@ -1,67 +1,50 @@
 module TelegramIndex.Log
 
 open System
+open System.IO
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open System.Diagnostics
-open FnArgs
-
-open MongoDB.Bson
-open MongoDB.Bson.Serialization.Attributes
-open MongoDB.Driver
-open MongoDB.Driver.Linq
-
 open LogModel
+open MBrace.FsPickler.Json
 
 
-type LogRecordBatch() =
-    [<BsonId>]
-    member val Id: ObjectId = ObjectId.Empty with get, set
-    member val Timestamp: DateTimeOffset = DateTimeOffset.MinValue with get, set
-    member val Records: System.Collections.Generic.List<BsonDocument> = null with get, set
+let jsonSerializer = FsPickler.CreateJsonSerializer(indent = false, omitHeader = true)
 
-type Interface = {
-    LogCollection: IMongoCollection<LogRecordBatch>
+let logFileName = "log.txt"
+
+let readAll () = task {
+    if not <| File.Exists(logFileName) then
+        return List.empty
+    else
+        let! content = File.ReadAllTextAsync(logFileName)
+        return content.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+        |> Seq.map jsonSerializer.UnPickleOfString<LogRecord>
+        |> List.ofSeq
 }
 
-let init (db: IMongoDatabase) =
-    { LogCollection = db.GetCollection<LogRecordBatch>("log")}
-
-
-let readAll iface = task {
-    let! rs = iface.LogCollection.AsQueryable().OrderBy(fun x -> x.Timestamp).ToListAsync()
-    return
-        rs
-        |> Seq.collect (fun x -> x.Records)
-        |> Seq.map MongoPickler.unpickle<LogRecord>
-}
-
-let insert (logRecords: LogRecord list) iface = task {
+let insert (logRecords: LogRecord list) = task {
     if logRecords.Length > 0 then
-        let rs = logRecords |> List.map MongoPickler.pickle
-        let batch =
-            LogRecordBatch(
-                Timestamp = DateTimeOffset.UtcNow,
-                Records = new System.Collections.Generic.List<BsonDocument>(rs)
-            )
-        do! iface.LogCollection.InsertOneAsync(batch)
+        let rs = logRecords |> List.map jsonSerializer.PickleToString
+        do! File.AppendAllLinesAsync(logFileName, rs)
 }
 
-let reportException (exc: Exception) iface = task {
+let reportException (exc: Exception) = task {
     try
         let err = exc.ToStringDemystified()
         do ConsoleLog.print <| err
-        do! err |> LogRecord.Exception |> List.singleton |> (flip insert iface)
+        do! err |> LogRecord.Exception |> List.singleton |> insert
     with e ->
-        do ConsoleLog.print "can not report an exception to the DB"
+        do ConsoleLog.print "can not report an exception"
+        do ConsoleLog.print <| e.ToString()
         do ConsoleLog.print <| exc.ToString()
 
     return ()
 }
 
-let trackTask (trackableTask: Task.TplUnitTask) iface = ignore <| task {
+let trackTask (trackableTask: Task.TplUnitTask) = ignore <| task {
     try
         do! trackableTask
         return ()
     with e ->
-        do! reportException e iface
+        do! reportException e
 }

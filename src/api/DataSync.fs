@@ -7,7 +7,6 @@ open FnArgs
 type Interface = {
     Telegram: Telegram.Interface
     PhotoDownloadService: PhotoDownloadService.Interface
-    Log: Log.Interface
 }
 
 type State = {
@@ -15,8 +14,8 @@ type State = {
     ScrapperState: ScrapperModel.ScrapperState option
 }
 
-let init log = task {
-    let! rs = Log.readAll log
+let init () = task {
+    let! rs = Log.readAll()
     let ms = MemStorage.restoreFromLog rs
     let lastScrapperRun =
         rs
@@ -34,10 +33,9 @@ let private longDelay () =
     DelayHelper.delayBetween 3.0 20.0
 
 let private getScrapperSeq (initialScrapperState: ScrapperModel.ScrapperState option) (cfg: Config.ScrapperConfig) (iface: Interface) = task {
-    let log = iface.Log
     let tg = iface.Telegram
     let! channel = Telegram.findChannel cfg.ChannelUsername tg
-    let channelPeer = channel |> Option.map Telegram.getChannelPeer |> Option.get
+    let channelPeer = channel |> Option.get |> Telegram.getChannelPeer
 
     return
         AsyncSeq.initInfinite ignore
@@ -57,7 +55,6 @@ let private getScrapperSeq (initialScrapperState: ScrapperModel.ScrapperState op
 }
 
 let private runImpl (cfg: Config.ScrapperConfig) (iface: Interface) (stateVar: State Var.Source) = task {
-    let log = iface.Log
     let! scrapperSeq = getScrapperSeq stateVar.value.ScrapperState cfg iface
     let scrapperStream = scrapperSeq |> AsyncSeq.toObservable |> AsyncSeq.ofObservableBuffered
     do!
@@ -85,7 +82,7 @@ let private runImpl (cfg: Config.ScrapperConfig) (iface: Interface) (stateVar: S
                 |> Task.collectUnit
 
             let rs = List.concat [ newMessagesLog; newUsersLog; [ LogModel.ScrapperState scrapperState ] ]
-            do! Log.insert rs log
+            do! Log.insert rs
 
             do flip Var.update stateVar <| (fun v ->
                 { v with
@@ -106,6 +103,7 @@ let private runImpl (cfg: Config.ScrapperConfig) (iface: Interface) (stateVar: S
         })
 }
 
+
 let runInBackground cfg iface stateVar = ignore <| task {
    let mutable flag = false
    while not flag do
@@ -114,7 +112,7 @@ let runInBackground cfg iface stateVar = ignore <| task {
        with err ->
            let isDisconnect = err :? Telega.TgBrokenConnectionException
            if not isDisconnect then
-               do! Log.reportException err iface.Log
+               do! Log.reportException err
            if (err :? Telega.TgPasswordNeededException || err :? Telega.TgNotAuthenticatedException) then
                flag <- true
 

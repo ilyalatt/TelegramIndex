@@ -15,11 +15,16 @@ type Message = {
     Text: string
 }
 
-type FileLocation = {
+type PeerUser = {
+    Id: int
+    AccessHash: int64
+}
+
+type PhotoLocation = {
     VolumeId: int64
     LocalId: int
-    Secret: int64
-    FileReference: byte[]
+    PhotoId: int64
+    User: PeerUser
 }
 
 type User = {
@@ -27,7 +32,7 @@ type User = {
     FirstName: string
     LastName: string
     Username: string option
-    PhotoLocation: FileLocation option
+    PhotoLocation: PhotoLocation option
 }
 
 type ScrapperState = {
