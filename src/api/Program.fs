@@ -7,7 +7,8 @@ let runWithoutSync = not << isNull <| System.Environment.GetEnvironmentVariable(
 
 do Telega.Internal.TgTrace.IsEnabled <- true
 
-let mainAsync () = task {
+let mainAsync (args: string[]) = task {
+    printfn "%s" <| System.Environment.CurrentDirectory
     let! cfg = Config.readCfg ()
     let! tg =
         if runWithoutSync then Task.returnM None
@@ -24,16 +25,15 @@ let mainAsync () = task {
         )
 
         let api: Api.Interface = { MemStorage = memStorage }
-        do WebApp.run api |> ignore
-        do! Task.TplTask.Delay(-1)
+        do! WebApp.run api args
     finally
         tg |> Option.iter (fun tg -> tg.Client.Dispose())
 }
 
 [<EntryPoint>]
-let main argv =
+let main args =
     try
-        do mainAsync().Wait()
+        do mainAsync(args).Wait()
     with e ->
         do printfn "%s" <| e.ToStringDemystified()
     0

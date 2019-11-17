@@ -3,10 +3,10 @@ set -e
 
 rm -rf build
 cd src/api
-dotnet publish --configuration Release --output ../../build
+dotnet publish --configuration Release --runtime linux-x64 --output ../../build
 
 cd ../web
 rm -rf dist
-nps build
+yarn nps build
 mv dist ../../build/wwwroot
 cd ../..

@@ -107,10 +107,6 @@ let findChannel channelUsername (iface: Interface) = task {
             (Messages.Dialogs.AsTag >> LExt.toOpt >> Option.get)
             >> (fun d -> d.Chats)
             >> Seq.choose (Chat.AsChannelTag >> LExt.toOpt)
-            >> Seq.filter (fun x ->
-                printfn "%s" <| x.Title
-                true
-            )
             >> Seq.filter (fun x -> x.Username |> LExt.toOpt = Some channelUsername)
             >> Seq.tryHead
         )
