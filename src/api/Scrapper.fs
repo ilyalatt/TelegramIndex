@@ -1,7 +1,6 @@
 module TelegramIndex.Scrapper
 
 open System
-open System.Text
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open ScrapperModel
 open Telega.Rpc.Dto.Types
@@ -37,11 +36,49 @@ let scrape (channelPeer: InputPeer.ChannelTag) (state: ScrapperModel.ScrapperSta
         |> Seq.map (fun x -> (x.Id, x))
         |> Map.ofSeq
 
-    let emptify idx len (s: string) =
-        let sb = StringBuilder(s)
-        do Seq.init len ((+) idx) |> Seq.iter (fun p -> sb.[p] <- ' ')
+    // * deletes the substring
+    // * removes trailing whitespaces in the line around the deleted substring
+    // but leaves one whitespace if there are trailing whitespaces left and right to the substring
+    // * removes the line if it is empty
+    // assumes that substrings are nonoverlapping
+    let emptify (s: string) substrings =
+        let substrings = substrings |> Seq.sortBy id
+        let trySkip n = Seq.indexed >> Seq.skipWhile (fun (i, _x) -> i < n) >> Seq.map snd
+        let sb = System.Text.StringBuilder(s)
+        let mutable offset = 0
+        do substrings |> Seq.iter (fun (pos, len) ->
+            let pos = pos + offset
+            let leftIdx = pos
+            let leftIdx =
+                Seq.init leftIdx id
+                |> Seq.rev
+                |> Seq.takeWhile (fun x -> sb.[x] = ' ')
+                |> Seq.tryLast
+                |> Option.defaultValue leftIdx
+            let rightIdx = pos + len - 1
+            let rightIdx =
+                Seq.initInfinite ((+) rightIdx)
+                |> trySkip 1
+                |> Seq.takeWhile (fun x -> x < sb.Length && sb.[x] = ' ')
+                |> Seq.tryLast
+                |> Option.defaultValue rightIdx
+            let isNewLineRight = rightIdx + 1 < sb.Length && sb.[rightIdx + 1] = '\n'
+            let isStartLeft = leftIdx = 0
+            let isNewLineLeft = not isStartLeft && sb.[leftIdx - 1] = '\n'
+            let isSeparatorLeft = isStartLeft || isNewLineLeft
+            let isEmptyLine = isNewLineRight && isSeparatorLeft
+            let rightIdx = if isEmptyLine then rightIdx + 1 else rightIdx
+            let subLen = rightIdx - leftIdx + 1
+            let shouldAddWhitespace =
+                not isSeparatorLeft && not isNewLineRight && sb.[leftIdx] = ' ' && sb.[rightIdx] = ' '
+            do ignore <| sb.Remove(leftIdx, subLen)
+            do offset <- offset - subLen
+            if shouldAddWhitespace then
+                do ignore <| sb.Insert(leftIdx, ' ')
+                do offset <- offset + 1
+        )
         sb.ToString()
-
+        
     let msgEntities (msg: Message.Tag) =
         msg.Entities |> LExt.toOpt
         |> Option.map List.ofSeq
@@ -61,7 +98,8 @@ let scrape (channelPeer: InputPeer.ChannelTag) (state: ScrapperModel.ScrapperSta
             |> Some
             |> Option.filter (not << List.isEmpty)
             |> Option.map (
-                Seq.fold (fun a x -> a |> emptify x.Offset x.Length) m.Message
+                Seq.map (fun x -> (x.Offset, x.Length))
+                >> emptify m.Message
                 >> fun msgTxt -> msgTxt.Trim()
                 >> fun msgTxt -> (m.With(message = msgTxt), users |> Map.find (m.FromId |> LExt.toOpt |> Option.get))
             )
