@@ -3,7 +3,7 @@
 
   <div if.bind="filter != null">
     <div class="container">
-      <input class="input is-rounded search" type="text" placeholder="Search" value.two-way="filter.searchStr & debounce:200">
+      <input class="input is-rounded has-text-dark search" type="text" placeholder="Search" value.two-way="filter.searchStr & debounce:200">
 
       <div class="list">
         <div repeat.for="message of filter.filteredMessages">
