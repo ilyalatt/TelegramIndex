@@ -28,18 +28,9 @@ let insert (logRecords: LogRecord list) = task {
         do! File.AppendAllLinesAsync(logFileName, rs)
 }
 
-let reportException (exc: Exception) = task {
-    try
-        let err = exc.ToStringDemystified()
-        do ConsoleLog.print <| err
-        do! err |> LogRecord.Exception |> List.singleton |> insert
-    with e ->
-        do ConsoleLog.print "can not report an exception"
-        do ConsoleLog.print <| e.ToString()
-        do ConsoleLog.print <| exc.ToString()
-
-    return ()
-}
+let reportException (exc: Exception) =
+    let err = exc.ToStringDemystified()
+    do ConsoleLog.print <| err
 
 let trackTask (trackableTask: Task.TplUnitTask) = ignore <| task {
     try

@@ -46,7 +46,7 @@ let api iface =
     ]
 
 let errorHandler (ex: Exception) _logger =
-    do ignore <| Log.reportException ex
+    do Log.reportException ex
     clearResponse >=> ServerErrors.INTERNAL_ERROR ()
 
 let configureApp (app: IApplicationBuilder) iface =

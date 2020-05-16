@@ -112,7 +112,7 @@ let runInBackground cfg iface stateVar = ignore <| task {
        with err ->
            let isDisconnect = err :? Telega.TgBrokenConnectionException
            if not isDisconnect then
-               do! Log.reportException err
+               do Log.reportException err
            if (err :? Telega.TgPasswordNeededException || err :? Telega.TgNotAuthenticatedException) then
                flag <- true
 
