@@ -34,27 +34,28 @@ I recommend to use NGINX to host the UI over https. Here is a config example:
 
 ```
 upstream sns_index_upstream {
-    server 127.0.0.1:3333;
+  server 127.0.0.1:3333;
 }
 
 server {
-   listen 80;
-   return 301 https://$host$request_uri;
+  listen 80;
+  return 301 https://$host$request_uri;
 }
 
 server {
-    listen 443 ssl http2;
-    ssl_certificate /etc/ssl/certs/sns-index.pem;
-    ssl_certificate_key /etc/ssl/private/sns-index.key;
+  listen 443 ssl http2;
+  ssl_certificate /etc/ssl/certs/sns-index.pem;
+  ssl_certificate_key /etc/ssl/private/sns-index.key;
 
-    server_name sns-index.com;
-    location / {
-        proxy_pass http://sns_index_upstream;
-    }
+  server_name sns-index.com;
+  location / {
+    proxy_pass http://sns_index_upstream;
+  }
 }
 ```
 
 ## Caveats
 
-* Channel must be not archived.
+* The channel must not be archived.
 * There is a bug of Telega library that suspends scraping for ~15 minutes sometimes.
+* The scraper does not handle updated messages.

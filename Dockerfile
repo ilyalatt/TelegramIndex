@@ -21,5 +21,4 @@ COPY --from=api-build /build /app
 COPY --from=web-build /build /app/wwwroot
 
 EXPOSE 80
-ENV ASPNETCORE_URLS=http://+:80
 ENTRYPOINT [ "./TelegramIndex" ]

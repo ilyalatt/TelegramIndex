@@ -20,4 +20,5 @@ type RootConfig = {
 
 let jsonSerializer = FsPickler.CreateJsonSerializer(indent = false, omitHeader = true)
 let readCfg () =
-    System.IO.File.ReadAllTextAsync("config.json") |> Task.map jsonSerializer.UnPickleOfString<RootConfig>
+    System.IO.File.ReadAllTextAsync("config.json")
+    |> Task.map jsonSerializer.UnPickleOfString<RootConfig>
