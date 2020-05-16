@@ -1,13 +1,10 @@
-session.dat
-config.json
-log.txt
-images
-
 .DS_STORE
 .idea
 .ionide
+*.user
+.fake
 bin
 obj
 build
 
-*.user
+data

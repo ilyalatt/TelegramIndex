@@ -1,0 +1,8 @@
+**/.idea
+**/.ionide
+**/bin
+**/obj
+**/node_modules
+**/build
+
+**/data
