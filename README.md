@@ -53,3 +53,8 @@ server {
     }
 }
 ```
+
+## Caveats
+
+* Channel must be not archived.
+* There is a bug of Telega library that suspends scraping for ~15 minutes sometimes.
