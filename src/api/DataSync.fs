@@ -35,23 +35,27 @@ let private longDelay () =
 let private getScrapperSeq (initialScrapperState: ScrapperModel.ScrapperState option) (cfg: Config.ScrapperConfig) (iface: Interface) = task {
     let tg = iface.Telegram
     let! channel = Telegram.findChannel cfg.ChannelUsername tg
-    let channelPeer = channel |> Option.get |> Telegram.getChannelPeer
+    match channel with
+    | None ->
+        do printfn "Can not find the channel with nickname '%s'." <| cfg.ChannelUsername
+        return AsyncSeq.empty
+    | Some channel ->
+        let channelPeer = channel |> Telegram.getChannelPeer
+        return
+            AsyncSeq.initInfinite ignore
+            |> AsyncSeq.scanAsync (fun (_, state) _ -> Async.AwaitTask <| task {
+                let! res = Scrapper.scrape channelPeer state tg
+                let newState = res.State
 
-    return
-        AsyncSeq.initInfinite ignore
-        |> AsyncSeq.scanAsync (fun (_, state) _ -> Async.AwaitTask <| task {
-            let! res = Scrapper.scrape channelPeer state tg
-            let newState = res.State
+                if state = newState then do! longDelay ()
 
-            if state = newState then do! longDelay ()
-
-            return (res.Messages, newState)
-        }) ([], initialScrapperState)
-        // the code below removes duplicates
-        |> AsyncSeq.append (AsyncSeq.singleton ([], None))
-        |> AsyncSeq.pairwise
-        |> AsyncSeq.filter (fun ((_, prevState), (_, newState)) -> prevState <> newState)
-        |> AsyncSeq.map snd
+                return (res.Messages, newState)
+            }) ([], initialScrapperState)
+            // the code below removes duplicates
+            |> AsyncSeq.append (AsyncSeq.singleton ([], None))
+            |> AsyncSeq.pairwise
+            |> AsyncSeq.filter (fun ((_, prevState), (_, newState)) -> prevState <> newState)
+            |> AsyncSeq.map snd
 }
 
 let private runImpl (cfg: Config.ScrapperConfig) (iface: Interface) (stateVar: State Var.Source) = task {
