@@ -10,6 +10,7 @@ do Telega.Internal.TgTrace.IsEnabled <- true
 let mainAsync (args: string[]) = task {
     printfn "%s" <| System.Environment.CurrentDirectory
     let! cfg = Config.readCfg ()
+    do ConsoleLog.showTrace <- cfg.Trace
     let! tg =
         if runWithoutSync then Task.returnM None
         else ConsoleLog.perfAsync "connect to telegram" (fun () -> Telegram.init cfg.Telegram |> Task.map Some)

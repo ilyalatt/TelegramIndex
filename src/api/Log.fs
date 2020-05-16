@@ -37,5 +37,5 @@ let trackTask (trackableTask: Task.TplUnitTask) = ignore <| task {
         do! trackableTask
         return ()
     with e ->
-        do! reportException e
+        do reportException e
 }
