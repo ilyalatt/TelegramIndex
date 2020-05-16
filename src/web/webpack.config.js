@@ -88,10 +88,12 @@ module.exports = ({ production, server, extractCss } = { }) => ({
         title, server, baseUrl
       },
     }),
-    new CopyWebpackPlugin([
-      { from: 'static/favicon.ico', to: 'favicon.ico' },
-      { from: 'static/robots.txt', to: 'robots.txt' }
-    ]),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: 'static/favicon.ico', to: 'favicon.ico' },
+        { from: 'static/robots.txt', to: 'robots.txt' }
+      ]
+    }),
     ...when(extractCss, new MiniCssExtractPlugin({
       filename: production ? '[contenthash].css' : '[id].css',
       chunkFilename: '[chunkhash].css'
