@@ -1,18 +1,16 @@
 ﻿module TelegramIndex.App
 
 open FSharp.Control.Tasks.V2.ContextInsensitive
+open System
 open System.Diagnostics
 
-let runWithoutSync = not << isNull <| System.Environment.GetEnvironmentVariable("DISABLE_SYNC")
-
-do Telega.Internal.TgTrace.IsEnabled <- true
-
 let mainAsync (args: string[]) = task {
-    printfn "%s" <| System.Environment.CurrentDirectory
+    do Environment.CurrentDirectory <- System.IO.Path.Combine(Environment.CurrentDirectory, "data")
     let! cfg = Config.readCfg ()
+    do Telega.Internal.TgTrace.IsEnabled <- cfg.Trace
     do ConsoleLog.showTrace <- cfg.Trace
     let! tg =
-        if runWithoutSync then Task.returnM None
+        if cfg.DisableSync then Task.returnM None
         else ConsoleLog.perfAsync "connect to telegram" (fun () -> Telegram.init cfg.Telegram |> Task.map Some)
 
     try

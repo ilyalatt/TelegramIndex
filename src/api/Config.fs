@@ -15,6 +15,7 @@ type RootConfig = {
     Telegram: TgConfig
     Scrapper: ScrapperConfig
     Trace: bool
+    DisableSync: bool
 }
 
 let jsonSerializer = FsPickler.CreateJsonSerializer(indent = false, omitHeader = true)
