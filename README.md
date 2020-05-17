@@ -2,23 +2,23 @@
 
 ## Summary
 
-Scrapes Telegram channel for #whois messages and provides UI to see them.
+Scrapes Telegram channel for `#whois` messages and provides UI to see them.
 Check out [sns-index](http://sns-index.com).
 
 ## Hosting
 
 The easiest way is to use the docker-compose:
-* Clone the repository.
+* Clone the repository (or download only `docker-compose.yaml`).
 * Create `data` directory.
 * Create `data/config.json`.
-* Here is an example of `config.json`. All you need to change is `Scrapper.ChannelUsername`.
+* Here is an example of `config.json`. All you need to change is `Scraper.ChannelUsername`.
 ```JSON
 {
   "Telegram": {
     "ApiId": 17349,
     "ApiHash": "344583e45741c457fe1862106095a5eb"
   },
-  "Scrapper": {
+  "Scraper": {
     "ChannelUsername": "startupneversleeps"
   },
   "Trace": false,
@@ -30,7 +30,7 @@ The easiest way is to use the docker-compose:
 * From now on you can use `docker-compose up` instead of `docker-compose run app`.
 * Check out `http://localhost:3333`.
 
-I recommend to use NGINX to host the UI over https. Here is a config example:
+I recommend to use NGINX to serve the UI over https. Here is a config example:
 
 ```
 upstream sns_index_upstream {

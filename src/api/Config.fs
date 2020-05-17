@@ -7,13 +7,13 @@ type TgConfig = {
     ApiHash: string
 }
 
-type ScrapperConfig = {
+type ScraperConfig = {
     ChannelUsername: string
 }
 
 type RootConfig = {
     Telegram: TgConfig
-    Scrapper: ScrapperConfig
+    Scraper: ScraperConfig
     Trace: bool
     DisableSync: bool
 }

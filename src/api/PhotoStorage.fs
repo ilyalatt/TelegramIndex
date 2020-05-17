@@ -4,14 +4,13 @@ open System
 open System.IO
 open FSharp.Control.Tasks.V2.ContextInsensitive
 
-
 type Photo = {
   Id: string
   Extension: string
   Body: byte array
 }
 
-let getId (loc: ScrapperModel.PhotoLocation) =
+let getId (loc: ScraperModel.PhotoLocation) =
     let inline bts64 (n: int64) = BitConverter.GetBytes n
     let bytes = bts64 loc.PhotoId
     bytes |> BitConverter.ToString |> (fun s -> s.Replace("-", "").ToLower())
@@ -19,7 +18,7 @@ let getId (loc: ScrapperModel.PhotoLocation) =
 let imageDirectory = DirectoryInfo("images")
 if not imageDirectory.Exists then imageDirectory.Create()
 
-let find (loc: ScrapperModel.PhotoLocation) = task {
+let find (loc: ScraperModel.PhotoLocation) = task {
     let id = loc |> getId
     let files = imageDirectory.GetFiles(id + ".*")
     match files |> Seq.tryHead with
@@ -30,7 +29,7 @@ let find (loc: ScrapperModel.PhotoLocation) = task {
         return Some <| { Id = id; Extension = extension; Body = content }
 }
 
-let insert (loc: ScrapperModel.PhotoLocation) (mimeType: Telegram.ImageFileMimeType) (body: byte array) = task {
+let insert (loc: ScraperModel.PhotoLocation) (mimeType: Telegram.ImageFileMimeType) (body: byte array) = task {
     let id = loc |> getId
     let extension = "." + mimeType.ToString().ToLower()
     let fileName = id + extension

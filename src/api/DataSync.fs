@@ -11,28 +11,28 @@ type Interface = {
 
 type State = {
     MemStorage: MemStorage.State
-    ScrapperState: ScrapperModel.ScrapperState option
+    ScraperState: ScraperModel.ScraperState option
 }
 
 let init () = task {
     let! rs = Log.readAll()
     let ms = MemStorage.restoreFromLog rs
-    let lastScrapperRun =
+    let lastScraperRun =
         rs
         |> Seq.rev
-        |> Seq.choose (function | LogModel.ScrapperState x -> x | _ -> None)
+        |> Seq.choose (function | LogModel.ScraperState x -> x | _ -> None)
         |> Seq.tryHead
-    let lastMessageId = lastScrapperRun |> Option.map (fun x -> x.LastMessageId)
+    let lastMessageId = lastScraperRun |> Option.map (fun x -> x.LastMessageId)
     return Var.create <| {
         MemStorage = ms
-        ScrapperState = lastMessageId |> Option.map (fun x -> { LastMessageId = x })
+        ScraperState = lastMessageId |> Option.map (fun x -> { LastMessageId = x })
     }
 }
 
 let private longDelay () =
     DelayHelper.delayBetween 3.0 20.0
 
-let private getScrapperSeq (initialScrapperState: ScrapperModel.ScrapperState option) (cfg: Config.ScrapperConfig) (iface: Interface) = task {
+let private getScraperSeq (initialScraperState: ScraperModel.ScraperState option) (cfg: Config.ScraperConfig) (iface: Interface) = task {
     let tg = iface.Telegram
     let! channel = Telegram.findChannel cfg.ChannelUsername tg
     match channel with
@@ -44,13 +44,13 @@ let private getScrapperSeq (initialScrapperState: ScrapperModel.ScrapperState op
         return
             AsyncSeq.initInfinite ignore
             |> AsyncSeq.scanAsync (fun (_, state) _ -> Async.AwaitTask <| task {
-                let! res = Scrapper.scrape channelPeer state tg
+                let! res = Scraper.scrape channelPeer state tg
                 let newState = res.State
 
                 if state = newState then do! longDelay ()
 
                 return (res.Messages, newState)
-            }) ([], initialScrapperState)
+            }) ([], initialScraperState)
             // the code below removes duplicates
             |> AsyncSeq.append (AsyncSeq.singleton ([], None))
             |> AsyncSeq.pairwise
@@ -58,12 +58,12 @@ let private getScrapperSeq (initialScrapperState: ScrapperModel.ScrapperState op
             |> AsyncSeq.map snd
 }
 
-let private runImpl (cfg: Config.ScrapperConfig) (iface: Interface) (stateVar: State Var.Source) = task {
-    let! scrapperSeq = getScrapperSeq stateVar.value.ScrapperState cfg iface
-    let scrapperStream = scrapperSeq |> AsyncSeq.toObservable |> AsyncSeq.ofObservableBuffered
+let private runImpl (cfg: Config.ScraperConfig) (iface: Interface) (stateVar: State Var.Source) = task {
+    let! scraperSeq = getScraperSeq stateVar.value.ScraperState cfg iface
+    let scraperStream = scraperSeq |> AsyncSeq.toObservable |> AsyncSeq.ofObservableBuffered
     do!
-        scrapperStream
-        |> AsyncSeq.iterAsync (fun (newMsgs, scrapperState) -> Async.AwaitTask <| task {
+        scraperStream
+        |> AsyncSeq.iterAsync (fun (newMsgs, scraperState) -> Async.AwaitTask <| task {
             let newMessagesLog =
                 newMsgs |> Seq.map fst
                 |> Seq.map LogModel.LogRecord.Message
@@ -85,18 +85,18 @@ let private runImpl (cfg: Config.ScrapperConfig) (iface: Interface) (stateVar: S
                 |> Seq.map Task.ignore
                 |> Task.collectUnit
 
-            let rs = List.concat [ newMessagesLog; newUsersLog; [ LogModel.ScrapperState scrapperState ] ]
+            let rs = List.concat [ newMessagesLog; newUsersLog; [ LogModel.ScraperState scraperState ] ]
             do! Log.insert rs
 
             do flip Var.update stateVar <| (fun v ->
                 { v with
                     MemStorage = MemStorage.update newMsgs stateVar.value.MemStorage
-                    ScrapperState = scrapperState
+                    ScraperState = scraperState
                 }
             )
 
             let lastScrapedMsg =
-                scrapperState |> Option.map (fun x -> x.LastMessageId)
+                scraperState |> Option.map (fun x -> x.LastMessageId)
                 |> Option.map string |> Option.defaultValue "-"
             let newMsgsCount = List.length <| newMessagesLog
             let newUsersCount = List.length <| newUsersLog

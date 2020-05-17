@@ -13,12 +13,12 @@
     <Compile Include="Utils/DelayHelper.fs" />
     <Compile Include="Utils/LExt.fs" />
     <Compile Include="Config.fs" />
-    <Compile Include="ScrapperModel.fs" />
+    <Compile Include="ScraperModel.fs" />
     <Compile Include="LogModel.fs" />
     <Compile Include="ConsoleLog.fs" />
     <Compile Include="Log.fs" />
     <Compile Include="Telegram.fs" />
-    <Compile Include="Scrapper.fs" />
+    <Compile Include="Scraper.fs" />
     <Compile Include="MemStorage.fs" />
     <Compile Include="PhotoStorage.fs" />
     <Compile Include="PhotoDownloadService.fs" />

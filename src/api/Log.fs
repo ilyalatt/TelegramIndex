@@ -7,7 +7,6 @@ open System.Diagnostics
 open LogModel
 open MBrace.FsPickler.Json
 
-
 let jsonSerializer = FsPickler.CreateJsonSerializer(indent = false, omitHeader = true)
 
 let logFileName = "log.txt"

@@ -1,9 +1,9 @@
 module TelegramIndex.MemStorage
 
 type State = {
-    Users: Map<int, ScrapperModel.User>
-    Messages: ScrapperModel.Message list
-    Photos: Map<int64, ScrapperModel.PhotoLocation>
+    Users: Map<int, ScraperModel.User>
+    Messages: ScraperModel.Message list
+    Photos: Map<int64, ScraperModel.PhotoLocation>
 }
 
 let emptyState = { Users = Map.empty; Messages = []; Photos = Map.empty }
@@ -12,7 +12,7 @@ let messages state = state.Messages
 let users state = state.Users
 let photos state = state.Photos
 
-let private addUser (u: ScrapperModel.User) state =
+let private addUser (u: ScraperModel.User) state =
     let newUsers = state |> users |> Map.add u.Id u
     let oldPhotos = state |> photos
     let newPhotos =
@@ -21,10 +21,10 @@ let private addUser (u: ScrapperModel.User) state =
         |> Option.defaultValue oldPhotos
     { state with Users = newUsers; Photos = newPhotos }
 
-let private addMessage (m: ScrapperModel.Message) state =
+let private addMessage (m: ScraperModel.Message) state =
     { state with Messages = m::state.Messages }
 
-let shouldUpdateUser<'T when 'T : equality> (cmpBy: ScrapperModel.User -> 'T) (user: ScrapperModel.User) (state: State) =
+let shouldUpdateUser<'T when 'T : equality> (cmpBy: ScraperModel.User -> 'T) (user: ScraperModel.User) (state: State) =
     state |> users |> Map.tryFind user.Id |> Option.map (fun u -> (cmpBy u) = (cmpBy user)) |> Option.defaultValue true
 
 let restoreFromLog (log: LogModel.LogRecord seq) =
@@ -34,7 +34,7 @@ let restoreFromLog (log: LogModel.LogRecord seq) =
         | _ -> s
     ) emptyState log
 
-let update (msgs: (ScrapperModel.Message * ScrapperModel.User) list) (state: State) =
+let update (msgs: (ScraperModel.Message * ScraperModel.User) list) (state: State) =
     msgs |> Seq.fold (fun s (m, u) ->
         s |> addUser u |> addMessage m
     ) state

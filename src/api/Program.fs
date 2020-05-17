@@ -20,7 +20,7 @@ let mainAsync (args: string[]) = task {
 
         do tg |> Option.iter (fun tg ->
             let dataSyncIface: DataSync.Interface = { Telegram = tg; PhotoDownloadService = photoDownloadService }
-            do DataSync.runInBackground cfg.Scrapper dataSyncIface dataSyncState
+            do DataSync.runInBackground cfg.Scraper dataSyncIface dataSyncState
         )
 
         let api: Api.Interface = { MemStorage = memStorage }

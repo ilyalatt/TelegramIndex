@@ -7,11 +7,11 @@ type Interface = {
     Telegram: Telegram.Interface option
 }
 
-let downloadAndSave (photoLoc: ScrapperModel.PhotoLocation) (iface: Interface) = task {
+let downloadAndSave (photoLoc: ScraperModel.PhotoLocation) (iface: Interface) = task {
     match iface.Telegram with
     | None -> return ()
     | Some tg ->
-        let! (mimeType, body) = photoLoc |> Scrapper.fileLocationToInput |> (fun f -> Telegram.getFile f tg)
+        let! (mimeType, body) = photoLoc |> Scraper.fileLocationToInput |> (fun f -> Telegram.getFile f tg)
         match mimeType with
         | Telegram.FileMimeType.Image mimeType -> 
             let insertTask = PhotoStorage.insert photoLoc mimeType body

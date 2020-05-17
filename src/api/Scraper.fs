@@ -1,12 +1,12 @@
-module TelegramIndex.Scrapper
+module TelegramIndex.Scraper
 
 open System
 open FSharp.Control.Tasks.V2.ContextInsensitive
-open ScrapperModel
+open ScraperModel
 open Telega.Rpc.Dto.Types
 open TelegramIndex.Utils
 
-let fileLocationToInput (loc: ScrapperModel.PhotoLocation) : InputFileLocation =
+let fileLocationToInput (loc: ScraperModel.PhotoLocation) : InputFileLocation =
     let user = loc.User
     let peer: InputPeer =
         InputPeer.UserTag(
@@ -20,7 +20,7 @@ let fileLocationToInput (loc: ScrapperModel.PhotoLocation) : InputFileLocation =
         peer = peer
     ) |> InputFileLocation.PeerPhotoTag.op_Implicit
 
-let scrape (channelPeer: InputPeer.ChannelTag) (state: ScrapperModel.ScrapperState option) (iface: Telegram.Interface) = task {
+let scrape (channelPeer: InputPeer.ChannelTag) (state: ScraperModel.ScraperState option) (iface: Telegram.Interface) = task {
     let lastMessageId = state |> Option.map (fun x -> x.LastMessageId)
     let inputPeer: InputPeer = channelPeer |> InputPeer.ChannelTag.op_Implicit
     let! batch = Telegram.getChannelHistory inputPeer lastMessageId iface
@@ -144,7 +144,7 @@ let scrape (channelPeer: InputPeer.ChannelTag) (state: ScrapperModel.ScrapperSta
         lastMessageId |> Option.defaultValue 0 |> (+) Telegram.batchLimit |> Some |> Option.filter (fun v -> v < batch.Count)
         // assume that there will be no history segment with batch_limit length in the end of a chat where all messages are deleted
         |> optOr (msgs |> List.tryLast |> Option.map (fun x -> x.Id))
-        // if the previous assumption is wrong then the scrapper will stuck on this state
+        // if the previous assumption is wrong then the scraper will stuck on this state
         |> optOr lastMessageId
         // map to state
         |> Option.map (fun x -> { LastMessageId = x })

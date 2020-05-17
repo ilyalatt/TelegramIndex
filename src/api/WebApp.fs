@@ -6,7 +6,6 @@ open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open System
 
-
 let configureApp iface (app: IApplicationBuilder) =
     do Api.configureApp app iface
     do ignore <| app.UseDefaultFiles().UseStaticFiles()
@@ -22,11 +21,10 @@ let run iface (args: string[]) =
             .Build()
     
     let webHostBuilder = WebHostBuilder()
-    do ignore <| webHostBuilder
+    webHostBuilder
         .UseKestrel()
         .UseConfiguration(config)
         .Configure(Action<IApplicationBuilder> (configureApp iface))
         .ConfigureServices(configureServices)
-    webHostBuilder
         .Build()
         .RunAsync()

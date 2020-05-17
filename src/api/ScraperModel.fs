@@ -1,4 +1,4 @@
-module TelegramIndex.ScrapperModel
+module TelegramIndex.ScraperModel
 
 open System
 open Telega.Rpc.Dto
@@ -35,11 +35,11 @@ type User = {
     PhotoLocation: PhotoLocation option
 }
 
-type ScrapperState = {
+type ScraperState = {
     LastMessageId: int
 }
 
 type ScrapeResult = {
     Messages: (Message * User) list
-    State: ScrapperState option
+    State: ScraperState option
 }
