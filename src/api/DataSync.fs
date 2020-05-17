@@ -95,14 +95,10 @@ let private runImpl (cfg: Config.ScraperConfig) (iface: Interface) (stateVar: St
                 }
             )
 
-            let lastScrapedMsg =
-                scraperState |> Option.map (fun x -> x.LastMessageId)
-                |> Option.map string |> Option.defaultValue "-"
             let newMsgsCount = List.length <| newMessagesLog
-            let newUsersCount = List.length <| newUsersLog
             do ConsoleLog.print <| (
-                sprintf "Last scraped message id: %s, new messages: %d, new users: %d"
-                <| lastScrapedMsg <| newMsgsCount <| newUsersCount
+                sprintf "Scraped %d #whois messages."
+                <| newMsgsCount
             )
         })
 }

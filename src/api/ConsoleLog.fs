@@ -5,7 +5,7 @@ open FSharp.Control.Tasks.V2.ContextInsensitive
 open System.Threading.Tasks
 
 let print msg =
-    do printfn "%s:  %s" <| System.DateTime.Now.ToString("O") <| msg
+    do printfn "[%s]: %s" <| System.DateTime.Now.ToString("yyyy.MM.dd HH:mm:ss") <| msg
 
 // Yeah.
 let mutable showTrace = false
