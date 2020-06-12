@@ -56,6 +56,5 @@ server {
 
 ## Caveats
 
-* The channel must not be archived.
 * There is a bug of Telega library that suspends scraping for ~15 minutes sometimes.
 * The scraper does not handle updated messages.

@@ -102,14 +102,25 @@ let getFile (file: InputFileLocation) (iface: Interface) = task {
 let findChannel channelUsername (iface: Interface) = task {
     let client = iface.Client
     do ConsoleLog.trace "get_user_dialogs_start"
-    let! res =
-        client.Messages.GetDialogs() |> Task.map (
-            (Messages.Dialogs.AsTag >> LExt.toOpt >> Option.get)
-            >> (fun d -> d.Chats)
-            >> Seq.choose (Chat.AsChannelTag >> LExt.toOpt)
-            >> Seq.filter (fun x -> x.Username |> LExt.toOpt = Some channelUsername)
-            >> Seq.tryHead
+    let! dialogs =
+        client.Call(
+            Functions.Messages.GetDialogs(
+                offsetDate = 0,
+                offsetPeer = (InputPeer.SelfTag() |> InputPeer.SelfTag.op_Implicit),
+                limit = 100,
+                excludePinned = false,
+                offsetId = 0,
+                hash = 0,
+                folderId = LanguageExt.Option.None
+            )
         )
+    let res =
+        dialogs
+        |> (Messages.Dialogs.AsTag >> LExt.toOpt >> Option.get)
+        |> (fun d -> d.Chats)
+        |> Seq.choose (Chat.AsChannelTag >> LExt.toOpt)
+        |> Seq.filter (fun x -> x.Username |> LExt.toOpt = Some channelUsername)
+        |> Seq.tryHead
     do ConsoleLog.trace "get_user_dialogs_end"
     return res
 }
