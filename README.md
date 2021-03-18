@@ -2,8 +2,7 @@
 
 ## Summary
 
-Scrapes Telegram channel for `#whois` messages and provides UI to see them.
-Check out [sns-index](http://sns-index.com).
+Telegram `#whois` channel messages scraper and UI for browsing the scraped messages.
 
 ## Hosting
 
